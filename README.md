@@ -3,7 +3,7 @@ CoreOS Clustering Kit
 
 Set-up tools for clustering CoreOS on AWS.
 
-Which cluster this kit orchestrate
+Which type of cluster this kit orchestrate
 --------------------------
 
 This kit is made for purpose to clustering CoreOS like below;
