@@ -1,0 +1,7 @@
+**.log
+terraform/userdata/core-datahost
+terraform/userdata/core-userdata
+terraform/userdata/core-registry
+**/vendor
+ami-id
+plan

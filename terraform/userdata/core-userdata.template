@@ -1,0 +1,44 @@
+#cloud-config
+ 
+coreos:
+  etcd:
+    discovery: {{ discovery_url }}
+    addr: $private_ipv4:2379
+    peer-addr: $private_ipv4:2380
+  fleet:
+    metadata: purpose={{ purpose_role }}
+  units:
+    - name: gen_uuid.service
+      command: start
+      content: |
+        [Unit]
+        Description=Generate Machine id
+
+        [Service]
+        Type=oneshot
+        ExecStart=/bin/sh -c '/usr/bin/echo "ETCD_NAME=$(/usr/bin/curl http://instance-data/1.0/meta-data/instance-id)" > /etc/core-id'
+        ExecStart=/bin/sh -c '/usr/bin/echo "$(/usr/bin/curl http://instance-data/1.0/meta-data/instance-id)" > /etc/machine-id'
+    - name: etcd.service
+      command: start
+      drop-ins:
+        - name: 15-etcd-2.0.conf
+          content: |
+            [Unit]
+            Requires=gen_uuid.service
+            [Service]
+            EnvironmentFile=/etc/core-id
+            Environment="ETCD_ADVERTIZE_CLIENT_URLS=http://$private_ipv4:2379"
+            Environment="ETCD_LISTEN_CLIENT_URLS=http://$private_ipv4:2379"
+            Environment="ETCD_INITIAL_ADVERTIZE_PEER_URLS=http://$private_ipv4:2380"
+            Environment="ETCD_LISTEN_PEER_URLS=http://$private_ipv4:2380"
+    - name: fleet.service
+      command: start
+      drop-ins:
+        - name: 30-etcd-2.0.conf
+          content: |
+            [Unit]
+            Requires=gen_uuid.service
+            [Service]
+            Environment="FLEET_ETCD_SERVERS=http://$private_ipv4:2379"
+    - name: docker.service
+      command: start
